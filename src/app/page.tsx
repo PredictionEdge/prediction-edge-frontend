@@ -1,7 +1,8 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { LinkButton } from "@/components/ui/link-button";
 
 export default function Home() {
   return (
@@ -23,12 +24,12 @@ export default function Home() {
           200+ daily opportunities backed by math, not gut feelings.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row gap-4">
-          <LinkButton href="/signup" size="lg" className="shadow-lg shadow-primary/30">
-            Get Started Free →
-          </LinkButton>
-          <LinkButton href="/login" variant="outline" size="lg">
-            Sign In
-          </LinkButton>
+          <Button asChild size="lg" className="shadow-lg shadow-primary/30">
+            <Link href="/signup">Get Started Free →</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/login">Sign In</Link>
+          </Button>
         </div>
       </section>
 
@@ -80,7 +81,9 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <LinkButton href="/signup" size="lg" className="w-full">Start Free Trial</LinkButton>
+              <Button asChild size="lg" className="w-full">
+                <Link href="/signup">Start Free Trial</Link>
+              </Button>
               <p className="mt-3 text-center text-xs text-muted-foreground">Free preview with 3 opportunities. No credit card required.</p>
             </CardContent>
           </Card>
@@ -92,7 +95,9 @@ export default function Home() {
       <section className="py-20 text-center">
         <h2 className="text-3xl font-bold mb-4">Ready to find your edge?</h2>
         <p className="text-muted-foreground mb-8">Join traders using math instead of luck.</p>
-        <LinkButton href="/signup" size="lg" className="shadow-lg shadow-primary/30">Get Started →</LinkButton>
+        <Button asChild size="lg" className="shadow-lg shadow-primary/30">
+          <Link href="/signup">Get Started →</Link>
+        </Button>
       </section>
     </div>
   );

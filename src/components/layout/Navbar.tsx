@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 export default function Navbar() {
   const { user, loading, signOut } = useAuth();
@@ -38,24 +37,26 @@ export default function Navbar() {
               <>
                 {user ? (
                   <div className="flex items-center gap-3">
-                    <Link href="/dashboard" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
-                      Dashboard
-                    </Link>
+                    <Button asChild size="sm">
+                      <Link href="/dashboard">Dashboard</Link>
+                    </Button>
                     <DropdownMenu>
-                      <DropdownMenuTrigger>
-                        <Avatar className="h-8 w-8 cursor-pointer">
-                          <AvatarFallback className="text-xs">
-                            {user.email?.charAt(0).toUpperCase() || "U"}
-                          </AvatarFallback>
-                        </Avatar>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-xs">
+                              {user.email?.charAt(0).toUpperCase() || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
                         <div className="px-2 py-1.5">
                           <p className="text-sm font-medium">{user.email}</p>
                         </div>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => router.push("/dashboard")}>
-                          Dashboard
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard">Dashboard</Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleSignOut}>
@@ -66,12 +67,12 @@ export default function Navbar() {
                   </div>
                 ) : (
                   <>
-                    <Link href="/login" className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}>
-                      Sign In
-                    </Link>
-                    <Link href="/signup" className={cn(buttonVariants({ size: "sm" }))}>
-                      Get Started
-                    </Link>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href="/login">Sign In</Link>
+                    </Button>
+                    <Button asChild size="sm">
+                      <Link href="/signup">Get Started</Link>
+                    </Button>
                   </>
                 )}
               </>

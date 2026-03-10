@@ -98,7 +98,7 @@ export default function ArbTable() {
       {/* Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
-          <Select value={categoryFilter} onValueChange={(val) => setCategoryFilter(val ?? "all")}>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
