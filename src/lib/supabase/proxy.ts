@@ -6,7 +6,7 @@ export async function updateSession(request: NextRequest) {
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         getAll() {
@@ -25,22 +25,21 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session — important for Server Components
-  const { data: { user } } = await supabase.auth.getUser();
+  // Refresh session using getClaims() — validates JWT signature
+  const { data, error } = await supabase.auth.getClaims();
 
   const { pathname } = request.nextUrl;
   const isProtected = pathname.startsWith("/dashboard");
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup");
+  const isAuthenticated = !error && data;
 
-  // Redirect unauthenticated from protected routes
-  if (isProtected && !user) {
+  if (isProtected && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated from auth pages
-  if (isAuthPage && user) {
+  if (isAuthPage && isAuthenticated) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
