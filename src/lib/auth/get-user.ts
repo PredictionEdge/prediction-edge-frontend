@@ -1,4 +1,4 @@
-import { verifySession } from "./session";
+import { createClient } from "@/lib/supabase/server";
 
 export interface SessionUser {
   uid: string;
@@ -6,16 +6,17 @@ export interface SessionUser {
 }
 
 /**
- * Get the current authenticated user from the session cookie.
+ * Get the current authenticated user from Supabase session.
  * Use in Server Components and API routes.
- * Returns null if not authenticated.
  */
 export async function getCurrentUser(): Promise<SessionUser | null> {
-  const decoded = await verifySession();
-  if (!decoded) return null;
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) return null;
 
   return {
-    uid: decoded.uid,
-    email: decoded.email,
+    uid: user.id,
+    email: user.email,
   };
 }

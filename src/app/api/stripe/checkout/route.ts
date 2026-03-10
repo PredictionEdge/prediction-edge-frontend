@@ -5,21 +5,15 @@ import { getUserSubscription, updateUserSubscription } from "@/lib/stripe/subscr
 import { applyRateLimit } from "@/lib/api-utils";
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 5 checkout attempts per minute
   const rateLimited = applyRateLimit(request, 5, 60_000);
   if (rateLimited) return rateLimited;
 
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const priceId = process.env.STRIPE_PRICE_ID;
-    if (!priceId) {
-      console.error("Missing STRIPE_PRICE_ID");
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
-    }
+    if (!priceId) return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
 
     const stripe = getStripe();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -30,7 +24,7 @@ export async function POST(request: NextRequest) {
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email,
-        metadata: { firebaseUid: user.uid },
+        metadata: { supabaseUid: user.uid },
       });
       customerId = customer.id;
       await updateUserSubscription(user.uid, { stripeCustomerId: customerId });
@@ -43,7 +37,7 @@ export async function POST(request: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/dashboard?checkout=success`,
       cancel_url: `${appUrl}/dashboard?checkout=canceled`,
-      subscription_data: { metadata: { firebaseUid: user.uid } },
+      subscription_data: { metadata: { supabaseUid: user.uid } },
     });
 
     return NextResponse.json({ url: session.url });
