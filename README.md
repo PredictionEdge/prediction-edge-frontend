@@ -89,7 +89,7 @@ src/
     │   └── get-user.ts             # Server component helper
     ├── stripe/
     │   ├── client.ts               # Stripe SDK init
-    │   ├── subscription.ts         # Firestore subscription CRUD
+    │   ├── subscription.ts         # Postgres subscription CRUD
     │   └── useSubscription.ts      # Client-side status hook
     ├── db/
     │   ├── index.ts                # Postgres pool
