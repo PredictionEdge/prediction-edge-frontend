@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function SignOutButton() {
   const { signOut } = useAuth();
@@ -13,11 +14,8 @@ export default function SignOutButton() {
   }
 
   return (
-    <button
-      onClick={handleSignOut}
-      className="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white"
-    >
+    <Button variant="ghost" size="sm" onClick={handleSignOut}>
       Sign Out
-    </button>
+    </Button>
   );
 }
