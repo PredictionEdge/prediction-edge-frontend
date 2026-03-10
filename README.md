@@ -1,109 +1,121 @@
 # PredictionEdge
 
-Prediction market arbitrage SaaS — real-time arbitrage opportunities across Polymarket, Kalshi & Opinion.
+Real-time prediction market arbitrage scanner across Polymarket & Kalshi.
 
-## POC Plan
+## Quick Start
 
-### Architecture
+```bash
+# Install dependencies
+npm install
 
+# Copy env template and fill in values
+cp .env.local.example .env.local
+
+# Run development server
+npm run dev
 ```
-[Next.js 14 App (App Router)]
-  ├── Firebase Auth (Google + email/password)
-  ├── Stripe Checkout (single subscription tier)
-  └── API Routes → prediction-market-arbitrage Postgres DB
-```
 
-**Deploy target:** Vercel  
-**Tech stack:** Next.js 14 · Tailwind CSS · Firebase Auth · Stripe · Postgres · Vercel
-
----
-
-### Phase 1 — Scaffold (1 day)
-
-- [ ] Init Next.js 14 with App Router and Tailwind
-- [ ] Project structure: `app/`, `lib/`, `components/`, `api/`
-- [ ] Environment config (`.env.local` template)
-- [ ] Deploy to Vercel (empty shell)
-
-### Phase 2 — Authentication (1 day)
-
-- [ ] Firebase project setup
-- [ ] Firebase Auth provider: email/password + Google sign-in
-- [ ] Auth context provider (`lib/auth/`)
-- [ ] Login & signup pages (`app/login/`, `app/signup/`)
-- [ ] Protected route middleware
-- [ ] User profile stored in Firestore (uid, email, subscription status)
-
-### Phase 3 — Stripe Subscription (1 day)
-
-- [ ] Stripe product + price setup (single tier, e.g. $39/mo)
-- [ ] Checkout session API route (`app/api/stripe/checkout/`)
-- [ ] Stripe webhook handler (`app/api/stripe/webhook/`)
-- [ ] Sync subscription status to Firestore on webhook events
-- [ ] Paywall gate: free users see top 3 arbs, paid users see all
-- [ ] Customer portal link for subscription management
-
-### Phase 4 — Arbitrage Dashboard (2 days)
-
-- [ ] API route to query `prediction-market-arbitrage` DB for active arbs
-- [ ] Dashboard page (`app/dashboard/`)
-- [ ] Arb table: Market | Platforms | Spread % | Best Prices | Last Updated
-- [ ] Auto-refresh every 30 seconds
-- [ ] Sort by spread (descending by default)
-- [ ] Filter by platform pair and market category
-- [ ] Arb calculator component (stake input → allocation + guaranteed profit)
-- [ ] Empty/loading/error states
-
-### Phase 5 — Polish & Launch (1 day)
-
-- [ ] Landing page with hero, features, pricing CTA
-- [ ] Responsive design (mobile-first)
-- [ ] Rate limiting on API routes (`next-rate-limit` or similar)
-- [ ] SEO: meta tags, OG image, sitemap
-- [ ] Analytics (Vercel Analytics or Plausible)
-- [ ] README with setup instructions
-
----
-
-### Timeline
-
-| Phase | Days | Cumulative |
-|-------|------|------------|
-| Scaffold | 1 | 1 |
-| Auth | 1 | 2 |
-| Stripe | 1 | 3 |
-| Dashboard | 2 | 5 |
-| Polish | 1 | 6 |
-
-**Total: ~6 days**
-
----
-
-### Competitive Advantages
-
-- **Data pipeline already exists** — `prediction-market-arbitrage` repo computes arbs continuously
-- **Undercut on price** — start at $29–39/mo vs ArbBets' $59/mo entry
-- **API access from day 1** — ArbBets gates this at $299/mo
-- **Real-time orderbook depth** — deeper data than competitors if available
-- **Lean stack** — no API gateway overhead for POC, Firebase + Vercel free tiers
-
----
-
-### Future Phases (Post-POC)
-
-- Multiple subscription tiers (Basic / Pro / API)
-- Public REST API with per-key rate limiting
-- Telegram/Discord alerts for high-spread arbs
-- Historical arb performance tracking
-- Mobile app (React Native or PWA)
-- Cloudflare API Shield when API customers scale
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Setup
 
+### 1. Firebase
+
+1. Create a [Firebase project](https://console.firebase.google.com/)
+2. Enable **Email/Password** and **Google** sign-in methods
+3. Generate a service account key (Project Settings → Service Accounts)
+4. Fill in the `NEXT_PUBLIC_FIREBASE_*` and `FIREBASE_ADMIN_*` env vars
+
+### 2. Stripe
+
+1. Create a [Stripe account](https://dashboard.stripe.com/)
+2. Create a Product with a recurring Price (e.g. $39/month)
+3. Set up a webhook endpoint: `https://yourdomain.com/api/stripe/webhook`
+   - Events: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`
+4. Fill in the `STRIPE_*` env vars
+
+### 3. Database
+
+Set `DATABASE_URL` to your `prediction-market-arbitrage` Postgres connection string.
+
+### 4. Deploy to Vercel
+
 ```bash
-# Coming soon — scaffold in Phase 1
-npm create next-app@latest . --typescript --tailwind --app
+npm i -g vercel
+vercel
 ```
+
+Add all env vars in the Vercel dashboard under Settings → Environment Variables.
+
+## Architecture
+
+```
+src/
+├── app/
+│   ├── page.tsx                    # Landing page
+│   ├── layout.tsx                  # Root layout + metadata
+│   ├── not-found.tsx               # 404 page
+│   ├── sitemap.ts                  # Dynamic sitemap
+│   ├── robots.ts                   # Robots.txt
+│   ├── opengraph-image.tsx         # Dynamic OG image
+│   ├── login/                      # Firebase Auth login
+│   ├── signup/                     # Firebase Auth signup
+│   ├── dashboard/                  # Arb dashboard (protected)
+│   └── api/
+│       ├── arbs/                   # Arb data endpoint (rate limited)
+│       ├── auth/session/           # Session cookie management
+│       └── stripe/
+│           ├── checkout/           # Create checkout session
+│           ├── webhook/            # Handle Stripe events
+│           ├── portal/             # Billing portal
+│           └── status/             # Subscription status
+├── components/
+│   ├── layout/
+│   │   ├── Navbar.tsx              # Sticky nav with auth state
+│   │   ├── Footer.tsx              # Site footer
+│   │   └── SignOutButton.tsx       # Sign out + redirect
+│   └── dashboard/
+│       ├── ArbTable.tsx            # Main arb table with sorting/filtering
+│       ├── ArbCalculator.tsx       # Interactive profit calculator
+│       ├── StatsBar.tsx            # Summary statistics
+│       ├── ManageSubscription.tsx  # Stripe portal link
+│       └── SubscriptionGate.tsx    # Paywall wrapper
+└── lib/
+    ├── auth/
+    │   ├── firebase.ts             # Client SDK (lazy init)
+    │   ├── firebase-admin.ts       # Admin SDK (server-side)
+    │   ├── AuthContext.tsx          # React auth provider
+    │   ├── session.ts              # Session cookie management
+    │   └── get-user.ts             # Server component helper
+    ├── stripe/
+    │   ├── client.ts               # Stripe SDK init
+    │   ├── subscription.ts         # Firestore subscription CRUD
+    │   └── useSubscription.ts      # Client-side status hook
+    ├── db/
+    │   ├── index.ts                # Postgres pool
+    │   ├── arbs.ts                 # Arb query logic
+    │   └── types.ts                # TypeScript types
+    ├── rate-limit.ts               # In-memory rate limiter
+    └── api-utils.ts                # API route helpers
+```
+
+## Security
+
+- **Session cookies**: httpOnly, secure, sameSite=lax — no tokens in localStorage
+- **Server-side verification**: Firebase Admin SDK with revocation checking
+- **Defense in depth**: Middleware + server component auth checks
+- **Webhook verification**: Stripe signature validation on all events
+- **Rate limiting**: Per-IP sliding window on all API routes
+- **Input validation**: Strict type checking on all API inputs
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS
+- **Auth**: Firebase Authentication
+- **Payments**: Stripe (Checkout + Customer Portal)
+- **Database**: PostgreSQL (prediction-market-arbitrage)
+- **Deploy**: Vercel
 
 ## License
 

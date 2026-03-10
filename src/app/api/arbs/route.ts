@@ -1,11 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getUserSubscription, isSubscriptionActive } from "@/lib/stripe/subscription";
 import { getActiveArbs } from "@/lib/db/arbs";
+import { applyRateLimit } from "@/lib/api-utils";
 
 const FREE_LIMIT = 3;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Rate limit: 30 requests per minute (auto-refresh is every 30s)
+  const rateLimited = applyRateLimit(request, 30, 60_000);
+  if (rateLimited) return rateLimited;
+
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -14,7 +19,6 @@ export async function GET() {
 
     const arbs = await getActiveArbs();
 
-    // Check subscription
     const sub = await getUserSubscription(user.uid);
     const isPaid = isSubscriptionActive(sub);
 

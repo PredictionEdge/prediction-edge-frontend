@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionCookie, SESSION_COOKIE_NAME, SESSION_EXPIRY_MS } from "@/lib/auth/session";
+import { applyRateLimit } from "@/lib/api-utils";
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 auth attempts per minute
+  const rateLimited = applyRateLimit(request, 10, 60_000);
+  if (rateLimited) return rateLimited;
+
   try {
     const { idToken } = await request.json();
 
