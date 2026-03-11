@@ -1,36 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-interface Stats { total: number; avgSpread: number; maxSpread: number; }
+import { useArbs } from "@/lib/hooks/useArbs";
 
 export default function StatsBar() {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const { data } = useArbs();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/arbs");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!data.arbs?.length) return;
-        const spreads = data.arbs.map((a: { spread: number }) => a.spread);
-        setStats({
-          total: data.total,
-          avgSpread: spreads.reduce((a: number, b: number) => a + b, 0) / spreads.length,
-          maxSpread: Math.max(...spreads),
-        });
-      } catch {}
-    })();
-  }, []);
+  if (!data?.arbs?.length) return null;
 
-  if (!stats) return null;
+  const spreads = data.arbs.map((a) => a.spread);
+  const avg = spreads.reduce((a, b) => a + b, 0) / spreads.length;
+  const max = Math.max(...spreads);
 
   return (
     <div className="flex items-center gap-6 mb-6 text-xs text-muted-foreground/40">
-      <span><span className="text-foreground font-mono">{stats.total}</span> opportunities</span>
-      <span><span className="text-foreground font-mono">{stats.avgSpread.toFixed(1)}%</span> avg spread</span>
-      <span><span className="text-[var(--color-spread-green)] font-mono">{stats.maxSpread.toFixed(1)}%</span> best</span>
+      <span>
+        <span className="text-foreground font-mono">{data.total}</span> opportunities
+      </span>
+      <span>
+        <span className="text-foreground font-mono">{avg.toFixed(1)}%</span> avg spread
+      </span>
+      <span>
+        <span className="text-[var(--color-spread-green)] font-mono">{max.toFixed(1)}%</span> best
+      </span>
     </div>
   );
 }

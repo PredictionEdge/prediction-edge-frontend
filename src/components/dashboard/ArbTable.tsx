@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { ArbWithSpread } from "@/lib/db/types";
+import { useArbs } from "@/lib/hooks/useArbs";
 import ArbCalculator from "./ArbCalculator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -9,35 +10,18 @@ import { Button } from "@/components/ui/button";
 type SortField = "spread" | "market" | "category";
 type SortDir = "asc" | "desc";
 
-interface ArbsResponse { arbs: ArbWithSpread[]; total: number; isPaid: boolean; limited: boolean; }
-
 export default function ArbTable() {
-  const [data, setData] = useState<ArbsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data, loading, error, lastRefresh, refetch } = useArbs();
   const [sortField, setSortField] = useState<SortField>("spread");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [selectedArb, setSelectedArb] = useState<ArbWithSpread | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-
-  const fetchArbs = useCallback(async () => {
-    try {
-      const res = await fetch("/api/arbs");
-      if (!res.ok) throw new Error();
-      const json = await res.json();
-      setData(json); setLastRefresh(new Date()); setError("");
-    } catch { setError("Failed to load"); }
-    finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { fetchArbs(); const i = setInterval(fetchArbs, 30000); return () => clearInterval(i); }, [fetchArbs]);
 
   if (loading) return <LoadingSkeleton />;
   if (error) return (
     <div className="rounded-2xl border border-border/40 p-8 text-center">
       <p className="text-sm text-muted-foreground">{error}</p>
-      <Button variant="ghost" size="sm" onClick={fetchArbs} className="mt-2 text-xs">Retry</Button>
+      <Button variant="ghost" size="sm" onClick={refetch} className="mt-2 text-xs">Retry</Button>
     </div>
   );
   if (!data?.arbs.length) return (
@@ -102,14 +86,11 @@ export default function ArbTable() {
           <div key={arb.id}
             className={`transition-colors ${selectedArb?.id === arb.id ? "bg-secondary/50" : "hover:bg-secondary/30"}`}>
             <div className="px-5 py-4 flex items-center gap-4">
-              {/* Market info */}
               <div className="flex-1 min-w-0">
                 {arb.category && <p className="text-xs text-muted-foreground/40 mb-0.5">{arb.category}</p>}
                 <p className="text-sm truncate">{arb.market}</p>
                 <p className="text-xs text-muted-foreground/40 mt-0.5 hidden sm:block">{arb.direction}</p>
               </div>
-
-              {/* Prices */}
               <div className="flex items-center gap-5 shrink-0">
                 <div className="text-right hidden sm:block">
                   <p className="text-xs text-[var(--color-kalshi)]/50 mb-0.5">Kalshi</p>
@@ -141,8 +122,6 @@ export default function ArbTable() {
                 </button>
               </div>
             </div>
-
-            {/* Expanded calculator */}
             {selectedArb?.id === arb.id && (
               <div className="px-5 pb-4">
                 <ArbCalculator arb={arb} onClose={() => setSelectedArb(null)} />

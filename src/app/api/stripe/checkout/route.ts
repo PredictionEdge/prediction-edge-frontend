@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getUserSubscription, updateUserSubscription } from "@/lib/stripe/subscription";
-import { applyRateLimit } from "@/lib/api-utils";
 
 export async function POST(request: NextRequest) {
-  const rateLimited = applyRateLimit(request, 5, 60_000);
-  if (rateLimited) return rateLimited;
+  // CSRF: verify request origin
+  const origin = request.headers.get("origin");
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  if (origin && !appUrl.startsWith(origin)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const user = await getCurrentUser();
@@ -16,7 +19,6 @@ export async function POST(request: NextRequest) {
     if (!priceId) return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
 
     const stripe = getStripe();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     const existingSub = await getUserSubscription(user.uid);
     let customerId = existingSub.stripeCustomerId;

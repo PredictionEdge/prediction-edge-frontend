@@ -9,38 +9,9 @@ export interface UserSubscription {
 }
 
 /**
- * Ensure the users table exists. Called lazily on first query.
- * In production, use a proper migration (Alembic in your arb repo).
- */
-let tableEnsured = false;
-async function ensureTable(): Promise<void> {
-  if (tableEnsured) return;
-  const pool = getPool();
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS pe_users (
-      uid              TEXT PRIMARY KEY,
-      email            TEXT,
-      stripe_customer_id    TEXT UNIQUE,
-      stripe_subscription_id TEXT,
-      stripe_price_id       TEXT,
-      subscription_status   TEXT NOT NULL DEFAULT 'none',
-      current_period_end    BIGINT,
-      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_pe_users_stripe_customer
-    ON pe_users (stripe_customer_id)
-  `);
-  tableEnsured = true;
-}
-
-/**
- * Get subscription status for a user by Firebase UID.
+ * Get subscription status for a user by Supabase UID.
  */
 export async function getUserSubscription(uid: string): Promise<UserSubscription> {
-  await ensureTable();
   const pool = getPool();
   const result = await pool.query(
     `SELECT subscription_status, stripe_customer_id, stripe_subscription_id,
@@ -79,7 +50,6 @@ export async function updateUserSubscription(
     currentPeriodEnd: number;
   }>
 ): Promise<void> {
-  await ensureTable();
   const pool = getPool();
 
   await pool.query(
@@ -110,7 +80,6 @@ export async function updateUserSubscription(
  * Find a user UID by their Stripe customer ID.
  */
 export async function findUserByCustomerId(customerId: string): Promise<string | null> {
-  await ensureTable();
   const pool = getPool();
   const result = await pool.query(
     `SELECT uid FROM pe_users WHERE stripe_customer_id = $1 LIMIT 1`,
