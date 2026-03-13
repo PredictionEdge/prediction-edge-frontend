@@ -20,39 +20,46 @@ export async function getActiveArbs(): Promise<ArbWithSpread[]> {
       market_match_id,
       kalshi_event_ticker,
       kalshi_market_ticker,
-      poly_event_slug,
-      poly_market_id,
-      kalshi_yes_ask,
-      kalshi_no_ask,
-      poly_yes,
-      poly_no,
-      spread_pct,
-      spread_direction,
-      event_title,
-      kalshi_url,
-      poly_url,
+      polymarket_market_ticker,
+      polymarket_event_ticker,
+      direction,
+      kalshi_ask,
+      kalshi_bid,
+      poly_ask,
+      poly_bid,
+      raw_spread_pct,
+      net_spread_pct,
+      kalshi_fee,
+      poly_fee,
+      kalshi_title,
+      poly_slug,
       snapshot_at
     FROM arb_snapshot
-    WHERE spread_pct > 0
+    WHERE net_spread_pct > 0
       ${timeFilter}
     ORDER BY market_match_id, snapshot_at DESC
   `);
 
   return result.rows.map((row) => {
-    const spreadDir = row.spread_direction as string;
-    const isKalshiYes = spreadDir === "kalshi_yes_poly_no";
+    const dir = row.direction as string;
+    const isKalshiYes = dir === "kalshi_yes_poly_no";
+
+    const kalshiUrl = `https://kalshi.com/markets/${row.kalshi_event_ticker}`;
+    const polymarketUrl = row.poly_slug
+      ? `https://polymarket.com/event/${row.poly_slug}`
+      : "";
 
     return {
       id: row.id,
-      market: row.event_title || "Unknown",
+      market: row.kalshi_title || "Unknown",
       category: "",
       kalshiTicker: row.kalshi_market_ticker,
-      polymarketId: row.poly_market_id,
-      kalshiPrice: parseFloat(isKalshiYes ? row.kalshi_yes_ask : row.kalshi_no_ask) || 0,
-      polymarketPrice: parseFloat(isKalshiYes ? row.poly_no : row.poly_yes) || 0,
-      spread: parseFloat(row.spread_pct) * 100,
-      kalshiUrl: row.kalshi_url || "",
-      polymarketUrl: row.poly_url || "",
+      polymarketId: row.polymarket_market_ticker,
+      kalshiPrice: parseFloat(row.kalshi_ask) || 0,
+      polymarketPrice: parseFloat(row.poly_ask) || 0,
+      spread: parseFloat(row.net_spread_pct) * 100,
+      kalshiUrl,
+      polymarketUrl,
       direction: isKalshiYes
         ? "Buy YES on Kalshi, Buy NO on Polymarket"
         : "Buy NO on Kalshi, Buy YES on Polymarket",
