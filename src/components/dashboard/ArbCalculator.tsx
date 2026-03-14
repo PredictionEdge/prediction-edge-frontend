@@ -10,12 +10,12 @@ export default function ArbCalculator({ arb }: Props) {
   const [stake, setStake] = useState(1000);
 
   const totalCost = arb.kalshiPrice + arb.polymarketPrice;
-  const profitPerDollar = 1 - totalCost;
-  const roi = (profitPerDollar / totalCost) * 100;
-  const kalshiAlloc = (arb.kalshiPrice / totalCost) * stake;
-  const polyAlloc = (arb.polymarketPrice / totalCost) * stake;
-  const contracts = Math.floor(stake / totalCost);
-  const actualProfit = contracts * profitPerDollar;
+  const netProfitPerContract = arb.spread / 100; // net_spread_pct already includes fees
+  const roi = totalCost > 0 ? (netProfitPerContract / totalCost) * 100 : 0;
+  const kalshiAlloc = totalCost > 0 ? (arb.kalshiPrice / totalCost) * stake : 0;
+  const polyAlloc = totalCost > 0 ? (arb.polymarketPrice / totalCost) * stake : 0;
+  const contracts = totalCost > 0 ? Math.floor(stake / totalCost) : 0;
+  const actualProfit = contracts * netProfitPerContract;
 
   return (
     <div className="rounded-xl bg-secondary/50 p-4">
@@ -43,7 +43,7 @@ export default function ArbCalculator({ arb }: Props) {
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground/30 text-center">
-        Excludes fees and slippage
+        Fees included · excludes slippage
       </p>
     </div>
   );
